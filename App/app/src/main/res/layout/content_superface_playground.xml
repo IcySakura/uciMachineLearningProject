@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RadioGroup
+        android:id="@+id/content_superface_playground_radioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp">
+        <RadioButton
+            android:id="@+id/content_superface_playground_detect_num_of_face"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/detect_num_of_face"/>
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/content_superface_playground_take_photo_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:text="@string/take_photo"/>
+
+</LinearLayout>
