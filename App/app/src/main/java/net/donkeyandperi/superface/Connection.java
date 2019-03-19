@@ -2,7 +2,10 @@ package net.donkeyandperi.superface;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import org.apache.http.HttpResponse;
@@ -33,23 +36,29 @@ public class Connection {
         this.myApp = myApp;
     }
 
-    public class UploadPublicKey extends AsyncTask<String, Void, String> {
+    public class DetectNumOfFace extends AsyncTask<String, Void, String> {
 
-        public UploadPublicKey(){
-            Log.d("UploadPublicKey ", " initialized...");
+        private Handler handler;
+
+        public DetectNumOfFace(Handler handler){
+            this.handler = handler;
+            Log.d("DetectNumOfFace ", " initialized...");
         }
 
         @Override
         protected String doInBackground(String... params) {
-            File imageFile = new File(sContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "demo_img.jpg");
+            File imageFile = new File(myApp.getNumOfFaceDetectionImageUri().toString());
 
             HttpPost httppost = new HttpPost(mainUriTag + "detect_num_of_face.php");
             HttpClient myClient = new DefaultHttpClient();
 
             MultipartEntity entity = new MultipartEntity();
             StringBody x = null;
+            Message msg = new Message();
             try {
-                x = new StringBody("demo_img.jpg", Charset.forName("UTF-8"));
+                Log.d(TAG, "DetectNumOfFace: Comparing " + myApp.getNumOfFaceDetectionImageName()
+                        + " with " + myApp.getNumOfFaceDetectionImageUri().toString());
+                x = new StringBody(myApp.getNumOfFaceDetectionImageName(), Charset.forName("UTF-8"));
                 entity.addPart("title", x);
                 FileBody fileBody = new FileBody(imageFile);
                 entity.addPart("file", fileBody);
@@ -59,18 +68,25 @@ public class Connection {
 
                 BufferedReader br = new BufferedReader( new InputStreamReader(myResponse.getEntity().getContent()));
                 String line = "";
+                StringBuilder stringBuilder = new StringBuilder();
                 while ((line = br.readLine()) != null)
                 {
-                    Log.d("Myles: ", line);
+                    stringBuilder.append(line);
+                    Log.d("DetectNumOfFace: ", line);
                 }
+                Bundle bundle = new Bundle();
+                bundle.putString("msg_from_server", stringBuilder.toString());
+                bundle.putBoolean("is_success", true);
+                msg.setData(bundle);
             }
             catch(UnsupportedEncodingException e) {
-                Log.d("Myles: ", "Error");
+                Log.d("DetectNumOfFace: ", "Error");
                 e.printStackTrace();
             }
             catch(IOException e) {
                 e.printStackTrace();
             }
+            handler.sendMessage(msg);
             return "";
         }
     }
