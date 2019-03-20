@@ -2,6 +2,8 @@
     <string name="app_name">SuperFaceDemo</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="superface_playground">Superface Playground</string>
+    <string name="superface_labeling">Superface Labeling</string>
     <string name="nav_header_title">Android Studio</string>
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
@@ -14,4 +16,36 @@
     <string name="amount_of_face_detected">Amount Of Face Detected: %s</string>
     <string name="face_labeling_msg">Predicted Label: %s\nConfidence Vale: %s</string>
     <string name="no_similar_face_detected">No Similar Face Detected</string>
+    <string name="upload_label_s1">Upload s1 label\'s photo</string>
+    <string name="upload_label_s2">Upload s2 label\'s photo</string>
+    <string name="predict_with_uploaded_photos">Predict with uploaded photos</string>
+    <string name="predict_with_sample_photos">Predict with sample photos</string>
+    <string name="execute">execute</string>
+    <string name="clear_all_photos">Clear all uploaded photos on server</string>
+    <string name="upload_success">Upload Succeeded</string>
+    <string name="upload_fail">Upload Failed</string>
+    <string name="clear_success">Clear Succeeded</string>
+    <string name="clear_failed">Clear Failed</string>
+    <string name="info_when_clicked_sample_face_labeling">
+        There are also two labels of faces in the sample photos.\n
+        In order to try our Superface\'s Face Labeling API with our provided sample photo, please take a
+        photo on our provided sample photo. (It is stored "./data/face_label_test_data/test_img.jpg" where
+        "./" means the root folder of our Superface project)\n
+        Please be notified that executing sample photos\' Face Labeling progress will delete all photos you
+        have previously uploaded through our App. (i.e. the s1 and s2 labels\' photos)
+    </string>
+    <string name="info_for_face_labeling">
+        Hello, welcome to our Superface\'s Face Labeling API demo page.\n
+        In order to let you smoothly test out our API, we have limited the labels you can choose to amount
+        of 2. When you are actually using our API, there is limit on the amount of labels.\n
+        For more information about the API, please redirect to the documentation of our Superface API.\n
+        For more information about testing our Face Labeling using sample photos, please choose predict "with
+        sample photos" and then a dialog will appear with more information.\n
+        Please be notified that every time you restart the Demo App or reenter this page will not clear the
+        photos on the server, but will clear the photos\' counter on the local side. For better experience,
+        please clear all uploaded photos on server and reupload every time you reopen the App or reenter the
+        page.
+    </string>
+    <string name="be_notified">Please Be Notified!</string>
+    <string name="cancel">Cancel</string>
 </resources>

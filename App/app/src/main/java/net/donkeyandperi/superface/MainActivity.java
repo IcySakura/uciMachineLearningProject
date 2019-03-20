@@ -49,6 +49,15 @@ public class MainActivity extends AppCompatActivity
     private RadioButton numOfFaceInImageRadioButton;
     private Button takePhotoButton;
     private Button takePhotoButtonForLabeling;
+    private Button clearAllLabelPhotoButton;
+    private RadioGroup radioGroupSecond;
+    private RadioButton uploadLabelS1Photo;
+    private RadioButton uploadLabelS2Photo;
+    private RadioButton predictWithNormal;
+    private RadioButton predictWithSample;
+
+    private int labelS1Counter = 1;
+    private int labelS2Counter = 1;
 
     private Handler handler;
 
@@ -84,6 +93,8 @@ public class MainActivity extends AppCompatActivity
         navigationView.getMenu().getItem(0).setChecked(true);
 
         initActivity();
+
+        numOfFaceInImageRadioButton.setChecked(true);
     }
 
     @Override
@@ -97,12 +108,29 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void initActivity(){
+        progressDialog = new ProgressDialog(context);
+        progressDialog.setMessage(getString(R.string.talking_with_server));
+        progressDialog.setCancelable(false);
         setUpHandler();
         numOfFaceInImageRadioButton = findViewById(R.id.content_superface_playground_detect_num_of_face);
         radioGroupFirst = findViewById(R.id.content_superface_playground_radioGroup);
         takePhotoButton = findViewById(R.id.content_superface_playground_take_photo_button);
         takePhotoButtonForLabeling = findViewById(R.id.content_superface_labeling_take_photo_button);
+        clearAllLabelPhotoButton = findViewById(R.id.content_superface_labeling_clear_all_photos_button);
+        radioGroupSecond = findViewById(R.id.content_superface_labeling_radioGroup);
+        uploadLabelS1Photo = findViewById(R.id.content_superface_labeling_upload_s1);
+        uploadLabelS2Photo = findViewById(R.id.content_superface_labeling_upload_s2);
+        predictWithNormal = findViewById(R.id.content_superface_normal_predict);
+        predictWithSample = findViewById(R.id.content_superface_sample_predict);
         setUpTakePhotoButton();
+        clearAllLabelPhotoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                myApp.setCurrentMode(2);
+                new Connection(context, myApp).new ClearAllLabelPhotos(handler).execute();
+                progressDialog.show();
+            }
+        });
     }
 
     private void setUpTakePhotoButton(){
@@ -117,7 +145,27 @@ public class MainActivity extends AppCompatActivity
         takePhotoButtonForLabeling.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dispatchTakePictureIntent();
+                if(predictWithSample.isChecked()){
+                    AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+                    alertDialog.setTitle(getString(R.string.be_notified));
+                    alertDialog.setMessage(getString(R.string.info_for_face_labeling));
+                    alertDialog.setCancelable(false);
+                    alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dispatchTakePictureIntent();
+                                }
+                            });
+                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    alertDialog.show();
+                } else {
+                    dispatchTakePictureIntent();
+                }
             }
         });
     }
@@ -140,25 +188,36 @@ public class MainActivity extends AppCompatActivity
                                     dataBack.getString("msg_from_server")));
                             break;
                         case 1:
-                            String msgBack = dataBack.getString("msg_from_server");
-                            if(msgBack.equals("NULL")){
-                                alertDialog.setMessage(getString(R.string.no_similar_face_detected));
+                            if(uploadLabelS1Photo.isChecked() || uploadLabelS2Photo.isChecked()){
+                                alertDialog.setMessage(getString(R.string.upload_success));
                             } else {
-                                msgBack = msgBack.substring(1, msgBack.length() - 2);
-                                String[] msgBackArray = msgBack.split(",");
-                                alertDialog.setMessage(String.format(getString(R.string.face_labeling_msg),
-                                        msgBackArray[0], msgBackArray[1].substring(1)));
+                                String msgBack = dataBack.getString("msg_from_server");
+                                if(msgBack.equals("NULL")){
+                                    alertDialog.setMessage(getString(R.string.no_similar_face_detected));
+                                } else {
+                                    msgBack = msgBack.substring(1, msgBack.length() - 2);
+                                    String[] msgBackArray = msgBack.split(",");
+                                    alertDialog.setMessage(String.format(getString(R.string.face_labeling_msg),
+                                            msgBackArray[0], String.valueOf(100.0 - Float.valueOf(msgBackArray[1]))));
+                                }
                             }
+                            break;
+                        case 2:
+                            alertDialog.setMessage(getString(R.string.clear_success));
                             break;
                     }
                     alertDialog.setCancelable(false);
-                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                    alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
                                     dialog.dismiss();
                                 }
                             });
                     alertDialog.show();
+                }
+                if(myApp.getCurrentMode() == 2){
+                    // Go Back to mode 1
+                    myApp.setCurrentMode(1);
                 }
                 return false;
             }
@@ -209,10 +268,23 @@ public class MainActivity extends AppCompatActivity
             myApp.setCurrentMode(0);
             linearLayout = findViewById(R.id.content_main_superface_playground);
             linearLayout.setVisibility(View.VISIBLE);
+            numOfFaceInImageRadioButton.setChecked(true);
         } else if (id == R.id.face_labeling) {
             myApp.setCurrentMode(1);
             linearLayout = findViewById(R.id.content_main_superface_labeling);
             linearLayout.setVisibility(View.VISIBLE);
+            uploadLabelS1Photo.setChecked(true);
+            AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+            alertDialog.setTitle(getString(R.string.be_notified));
+            alertDialog.setMessage(getString(R.string.info_for_face_labeling));
+            alertDialog.setCancelable(false);
+            alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            alertDialog.show();
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
@@ -253,9 +325,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
-            progressDialog = new ProgressDialog(context);
-            progressDialog.setMessage(getString(R.string.talking_with_server));
-            progressDialog.setCancelable(false);
             progressDialog.show();
             Log.d(TAG, "onActivityResult: What is selected here: " + radioGroupFirst.getCheckedRadioButtonId());
             switch (myApp.getCurrentMode()){
@@ -267,7 +336,15 @@ public class MainActivity extends AppCompatActivity
                     break;
                 case 1:
                     Log.d(TAG, "onActivityResult: Going to execute faceLabeling");
-                    new Connection(context, myApp).new FaceLabeling(handler).execute();
+                    if(uploadLabelS1Photo.isChecked()){
+                       new Connection(context, myApp).new UploadLabelPhoto(handler, "s1", labelS1Counter++).execute();
+                    } else if (uploadLabelS2Photo.isChecked()){
+                        new Connection(context, myApp).new UploadLabelPhoto(handler, "s2", labelS2Counter++).execute();
+                    } else if (predictWithNormal.isChecked()){
+                        new Connection(context, myApp).new FaceLabeling(handler, "0").execute();
+                    } else if (predictWithSample.isChecked()){
+                        new Connection(context, myApp).new FaceLabeling(handler, "1").execute();
+                    }
                     break;
             }
 
