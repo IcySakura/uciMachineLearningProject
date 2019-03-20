@@ -5,13 +5,13 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_camera"
+            android:id="@+id/face_playground"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Import" />
+            android:title="@string/superface_playground" />
         <item
-            android:id="@+id/nav_gallery"
+            android:id="@+id/face_labeling"
             android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery" />
+            android:title="@string/superface_labeling" />
         <item
             android:id="@+id/nav_slideshow"
             android:icon="@drawable/ic_menu_slideshow"

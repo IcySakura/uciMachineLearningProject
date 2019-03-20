@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RadioGroup
+        android:id="@+id/content_superface_labeling_radioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp">
+        <RadioButton
+            android:id="@+id/content_superface_labeling_upload_s1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/upload_label_s1"/>
+        <RadioButton
+            android:id="@+id/content_superface_labeling_upload_s2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/upload_label_s2"/>
+        <RadioButton
+            android:id="@+id/content_superface_normal_predict"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/predict_with_uploaded_photos"/>
+        <RadioButton
+            android:id="@+id/content_superface_sample_predict"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/predict_with_sample_photos"/>
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/content_superface_labeling_take_photo_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:text="@string/take_photo"/>
+
+    <Button
+        android:id="@+id/content_superface_labeling_clear_all_photos_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:text="@string/clear_all_photos"/>
+
+</LinearLayout>

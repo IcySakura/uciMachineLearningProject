@@ -1,14 +1,25 @@
 package net.donkeyandperi.superface;
 
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import android.os.Handler;
+import android.os.Message;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 
 import com.google.android.material.navigation.NavigationView;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -17,14 +28,48 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+
+import java.io.File;
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private static final String TAG = "MainActivity ";
+
+    private MyApp myApp;
+    private Context context = this;
+    private ProgressDialog progressDialog;
+
+    private RadioGroup radioGroupFirst;
+    private RadioButton numOfFaceInImageRadioButton;
+    private Button takePhotoButton;
+    private Button takePhotoButtonForLabeling;
+    private Button clearAllLabelPhotoButton;
+    private RadioGroup radioGroupSecond;
+    private RadioButton uploadLabelS1Photo;
+    private RadioButton uploadLabelS2Photo;
+    private RadioButton predictWithNormal;
+    private RadioButton predictWithSample;
+
+    private int labelS1Counter = 1;
+    private int labelS2Counter = 1;
+
+    private Handler handler;
+
+    static final int REQUEST_TAKE_PHOTO = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        myApp = (MyApp)getApplication();
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -45,6 +90,11 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        navigationView.getMenu().getItem(0).setChecked(true);
+
+        initActivity();
+
+        numOfFaceInImageRadioButton.setChecked(true);
     }
 
     @Override
@@ -55,6 +105,123 @@ public class MainActivity extends AppCompatActivity
         } else {
             super.onBackPressed();
         }
+    }
+
+    private void initActivity(){
+        progressDialog = new ProgressDialog(context);
+        progressDialog.setMessage(getString(R.string.talking_with_server));
+        progressDialog.setCancelable(false);
+        setUpHandler();
+        numOfFaceInImageRadioButton = findViewById(R.id.content_superface_playground_detect_num_of_face);
+        radioGroupFirst = findViewById(R.id.content_superface_playground_radioGroup);
+        takePhotoButton = findViewById(R.id.content_superface_playground_take_photo_button);
+        takePhotoButtonForLabeling = findViewById(R.id.content_superface_labeling_take_photo_button);
+        clearAllLabelPhotoButton = findViewById(R.id.content_superface_labeling_clear_all_photos_button);
+        radioGroupSecond = findViewById(R.id.content_superface_labeling_radioGroup);
+        uploadLabelS1Photo = findViewById(R.id.content_superface_labeling_upload_s1);
+        uploadLabelS2Photo = findViewById(R.id.content_superface_labeling_upload_s2);
+        predictWithNormal = findViewById(R.id.content_superface_normal_predict);
+        predictWithSample = findViewById(R.id.content_superface_sample_predict);
+        setUpTakePhotoButton();
+        clearAllLabelPhotoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                myApp.setCurrentMode(2);
+                new Connection(context, myApp).new ClearAllLabelPhotos(handler).execute();
+                progressDialog.show();
+            }
+        });
+    }
+
+    private void setUpTakePhotoButton(){
+        // Take photo button for superface playground
+        takePhotoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dispatchTakePictureIntent();    // Going to let the user take a photo and back.
+            }
+        });
+        // Take photo button for superface labeling
+        takePhotoButtonForLabeling.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(predictWithSample.isChecked()){
+                    AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+                    alertDialog.setTitle(getString(R.string.be_notified));
+                    alertDialog.setMessage(getString(R.string.info_for_face_labeling));
+                    alertDialog.setCancelable(false);
+                    alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dispatchTakePictureIntent();
+                                }
+                            });
+                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    alertDialog.show();
+                } else {
+                    dispatchTakePictureIntent();
+                }
+            }
+        });
+    }
+
+    private void setUpHandler(){
+        handler = new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                progressDialog.dismiss();
+                Bundle dataBack = msg.getData();
+                if(dataBack == null){
+                    return false;
+                }
+                if(dataBack.getBoolean("is_success")){
+                    AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+                    alertDialog.setTitle(getString(R.string.msg_from_server));
+                    switch (myApp.getCurrentMode()){
+                        case 0:
+                            alertDialog.setMessage(String.format(getString(R.string.amount_of_face_detected),
+                                    dataBack.getString("msg_from_server")));
+                            break;
+                        case 1:
+                            if(uploadLabelS1Photo.isChecked() || uploadLabelS2Photo.isChecked()){
+                                alertDialog.setMessage(getString(R.string.upload_success));
+                            } else {
+                                String msgBack = dataBack.getString("msg_from_server");
+                                if(msgBack.equals("NULL")){
+                                    alertDialog.setMessage(getString(R.string.no_similar_face_detected));
+                                } else {
+                                    msgBack = msgBack.substring(1, msgBack.length() - 2);
+                                    String[] msgBackArray = msgBack.split(",");
+                                    alertDialog.setMessage(String.format(getString(R.string.face_labeling_msg),
+                                            msgBackArray[0], String.valueOf(100.0 - Float.valueOf(msgBackArray[1]))));
+                                }
+                            }
+                            break;
+                        case 2:
+                            alertDialog.setMessage(getString(R.string.clear_success));
+                            break;
+                    }
+                    alertDialog.setCancelable(false);
+                    alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    alertDialog.show();
+                }
+                if(myApp.getCurrentMode() == 2){
+                    // Go Back to mode 1
+                    myApp.setCurrentMode(1);
+                }
+                return false;
+            }
+        });
     }
 
     @Override
@@ -82,13 +249,42 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+
+        LinearLayout linearLayout;
+        switch (myApp.getCurrentMode()){
+            case 0:
+                linearLayout = findViewById(R.id.content_main_superface_playground);
+                linearLayout.setVisibility(View.GONE);
+                break;
+            case 1:
+                linearLayout = findViewById(R.id.content_main_superface_labeling);
+                linearLayout.setVisibility(View.GONE);
+                break;
+        }
+
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
+        if (id == R.id.face_playground) {
+            myApp.setCurrentMode(0);
+            linearLayout = findViewById(R.id.content_main_superface_playground);
+            linearLayout.setVisibility(View.VISIBLE);
+            numOfFaceInImageRadioButton.setChecked(true);
+        } else if (id == R.id.face_labeling) {
+            myApp.setCurrentMode(1);
+            linearLayout = findViewById(R.id.content_main_superface_labeling);
+            linearLayout.setVisibility(View.VISIBLE);
+            uploadLabelS1Photo.setChecked(true);
+            AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+            alertDialog.setTitle(getString(R.string.be_notified));
+            alertDialog.setMessage(getString(R.string.info_for_face_labeling));
+            alertDialog.setCancelable(false);
+            alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            alertDialog.show();
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
@@ -103,4 +299,56 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = myApp.createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "net.donkeyandperi.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+            progressDialog.show();
+            Log.d(TAG, "onActivityResult: What is selected here: " + radioGroupFirst.getCheckedRadioButtonId());
+            switch (myApp.getCurrentMode()){
+                case 0:
+                    if(numOfFaceInImageRadioButton.isChecked()){
+                        Log.d(TAG, "onActivityResult: Going to execute detectNumOfFace");
+                        new Connection(context, myApp).new DetectNumOfFace(handler).execute();
+                    }
+                    break;
+                case 1:
+                    Log.d(TAG, "onActivityResult: Going to execute faceLabeling");
+                    if(uploadLabelS1Photo.isChecked()){
+                       new Connection(context, myApp).new UploadLabelPhoto(handler, "s1", labelS1Counter++).execute();
+                    } else if (uploadLabelS2Photo.isChecked()){
+                        new Connection(context, myApp).new UploadLabelPhoto(handler, "s2", labelS2Counter++).execute();
+                    } else if (predictWithNormal.isChecked()){
+                        new Connection(context, myApp).new FaceLabeling(handler, "0").execute();
+                    } else if (predictWithSample.isChecked()){
+                        new Connection(context, myApp).new FaceLabeling(handler, "1").execute();
+                    }
+                    break;
+            }
+
+        }
+    }
+
 }

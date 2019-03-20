@@ -1,12 +1,13 @@
 import os
 import numpy as np
 import cv2
+import sys
 
 subjects = ["", "Joe Belfiore", "Robert Downey Jr."]
 
 def detect_face(img):
 	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-	face_cascade = cv2.CascadeClassifier('./lbpcascades/lbpcascade_frontalface.xml')
+	face_cascade = cv2.CascadeClassifier('./data/lbpcascades/lbpcascade_frontalface.xml')
 	faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5)
 	if (len(faces) == 0):
 		return None, None
@@ -36,17 +37,17 @@ def prepare_training_data(data_folder_path):
 				continue
 			image_path = subject_dir_path + "/" + image_name
 			image = cv2.imread(image_path)
-			# cv2.imshow("Training on image...", image)
+			#cv2.imshow("Training on image...", image)
 			# cv2.imshow("Training on image...", cv2.resize(image, (400, 500)))
-			cv2.waitKey(100)
+			#cv2.waitKey(100)
 			face, rect = detect_face(image)
 			if face is not None:
 				faces.append(face)
 				labels.append(label)
 
-	cv2.destroyAllWindows()
-	cv2.waitKey(1)
-	cv2.destroyAllWindows()
+	#cv2.destroyAllWindows()
+	#cv2.waitKey(1)
+	#cv2.destroyAllWindows()
 	return faces, labels
 
 def draw_rectangle(img, rect):
@@ -68,23 +69,24 @@ def predict(test_img):
 
 
 print("Preparing data...")
-faces, labels = prepare_training_data("./img")
+faces, labels = prepare_training_data("./input/faceRecognizerData/trainData/")
 print("Data prepared")
 print("Total faces: ", len(faces))
 print("Total labels: ", len(labels))
-
 
 face_recognizer = cv2.face.LBPHFaceRecognizer_create()
 face_recognizer.train(faces, np.array(labels))
 
 print("Predicting images...")
-test_img1 = cv2.imread("./test_img/test1.jpg")
-test_img2 = cv2.imread("./test_img/test2.jpg")
-predicted_img1 = predict(test_img1)
-predicted_img2 = predict(test_img2)
-print("Prediction complete")
-cv2.imshow(subjects[1], cv2.resize(predicted_img1, (400, 500)))
-cv2.imshow(subjects[2], cv2.resize(predicted_img2, (400, 500)))
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+#test_img1 = cv2.imread("./test_img/test1.jpg")
+#test_img2 = cv2.imread("./test_img/test2.jpg")
+#predicted_img1 = predict(test_img1)
+#predicted_img2 = predict(test_img2)
+userInput = cv2.imread(sys.argv[1])
+print("Prediction:") 
+predicted_img = predict(userInput)
+#cv2.imshow(subjects[1], cv2.resize(predicted_img1, (400, 500)))
+#cv2.imshow("Output", cv2.resize(predicted_img, (400, 500)))
+#cv2.waitKey(0)
+#cv2.destroyAllWindows()
 
