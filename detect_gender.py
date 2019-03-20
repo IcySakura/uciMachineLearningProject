@@ -27,7 +27,7 @@ if image is None:
     print("Could not read input image")
     exit()
 
-model = load_model("./train_data/gender_detection.model")
+model = load_model("./data/gender_train_data/gender_detection.model")
 
 
 face, confidence = cv.detect_face(image)
@@ -56,6 +56,8 @@ for idx, f in enumerate(face):
     label = classes[idx]
 
     label = "{}: {:.2f}%".format(label, conf[idx] * 100)
+
+    print(label)
 
     Y = startY - 10 if startY - 10 > 10 else startY + 10
 
