@@ -12,4 +12,6 @@
     <string name="msg_from_server">Message From Server</string>
     <string name="talking_with_server">Talking with server, please wait</string>
     <string name="amount_of_face_detected">Amount Of Face Detected: %s</string>
+    <string name="face_labeling_msg">Predicted Label: %s\nConfidence Vale: %s</string>
+    <string name="no_similar_face_detected">No Similar Face Detected</string>
 </resources>

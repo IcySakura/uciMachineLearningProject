@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.hardware.fingerprint.FingerprintManager;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -30,9 +29,9 @@ import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +48,7 @@ public class MainActivity extends AppCompatActivity
     private RadioGroup radioGroupFirst;
     private RadioButton numOfFaceInImageRadioButton;
     private Button takePhotoButton;
+    private Button takePhotoButtonForLabeling;
 
     private Handler handler;
 
@@ -81,6 +81,7 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        navigationView.getMenu().getItem(0).setChecked(true);
 
         initActivity();
     }
@@ -100,14 +101,23 @@ public class MainActivity extends AppCompatActivity
         numOfFaceInImageRadioButton = findViewById(R.id.content_superface_playground_detect_num_of_face);
         radioGroupFirst = findViewById(R.id.content_superface_playground_radioGroup);
         takePhotoButton = findViewById(R.id.content_superface_playground_take_photo_button);
+        takePhotoButtonForLabeling = findViewById(R.id.content_superface_labeling_take_photo_button);
         setUpTakePhotoButton();
     }
 
     private void setUpTakePhotoButton(){
+        // Take photo button for superface playground
         takePhotoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 dispatchTakePictureIntent();    // Going to let the user take a photo and back.
+            }
+        });
+        // Take photo button for superface labeling
+        takePhotoButtonForLabeling.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dispatchTakePictureIntent();
             }
         });
     }
@@ -124,8 +134,24 @@ public class MainActivity extends AppCompatActivity
                 if(dataBack.getBoolean("is_success")){
                     AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
                     alertDialog.setTitle(getString(R.string.msg_from_server));
-                    alertDialog.setMessage(String.format(getString(R.string.amount_of_face_detected),
-                            dataBack.getString("msg_from_server")));
+                    switch (myApp.getCurrentMode()){
+                        case 0:
+                            alertDialog.setMessage(String.format(getString(R.string.amount_of_face_detected),
+                                    dataBack.getString("msg_from_server")));
+                            break;
+                        case 1:
+                            String msgBack = dataBack.getString("msg_from_server");
+                            if(msgBack.equals("NULL")){
+                                alertDialog.setMessage(getString(R.string.no_similar_face_detected));
+                            } else {
+                                msgBack = msgBack.substring(1, msgBack.length() - 2);
+                                String[] msgBackArray = msgBack.split(",");
+                                alertDialog.setMessage(String.format(getString(R.string.face_labeling_msg),
+                                        msgBackArray[0], msgBackArray[1].substring(1)));
+                            }
+                            break;
+                    }
+                    alertDialog.setCancelable(false);
                     alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
@@ -164,13 +190,29 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+
+        LinearLayout linearLayout;
+        switch (myApp.getCurrentMode()){
+            case 0:
+                linearLayout = findViewById(R.id.content_main_superface_playground);
+                linearLayout.setVisibility(View.GONE);
+                break;
+            case 1:
+                linearLayout = findViewById(R.id.content_main_superface_labeling);
+                linearLayout.setVisibility(View.GONE);
+                break;
+        }
+
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
+        if (id == R.id.face_playground) {
+            myApp.setCurrentMode(0);
+            linearLayout = findViewById(R.id.content_main_superface_playground);
+            linearLayout.setVisibility(View.VISIBLE);
+        } else if (id == R.id.face_labeling) {
+            myApp.setCurrentMode(1);
+            linearLayout = findViewById(R.id.content_main_superface_labeling);
+            linearLayout.setVisibility(View.VISIBLE);
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
@@ -216,10 +258,19 @@ public class MainActivity extends AppCompatActivity
             progressDialog.setCancelable(false);
             progressDialog.show();
             Log.d(TAG, "onActivityResult: What is selected here: " + radioGroupFirst.getCheckedRadioButtonId());
-            if(numOfFaceInImageRadioButton.isChecked()){
-                Log.d(TAG, "onActivityResult: Going to execute detectNumOfFace");
-                new Connection(context, myApp).new DetectNumOfFace(handler).execute();
+            switch (myApp.getCurrentMode()){
+                case 0:
+                    if(numOfFaceInImageRadioButton.isChecked()){
+                        Log.d(TAG, "onActivityResult: Going to execute detectNumOfFace");
+                        new Connection(context, myApp).new DetectNumOfFace(handler).execute();
+                    }
+                    break;
+                case 1:
+                    Log.d(TAG, "onActivityResult: Going to execute faceLabeling");
+                    new Connection(context, myApp).new FaceLabeling(handler).execute();
+                    break;
             }
+
         }
     }
 

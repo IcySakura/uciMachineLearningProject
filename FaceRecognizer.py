@@ -59,9 +59,7 @@ def draw_text(img, text, x, y):
 
 def predict(test_img):
 	img = test_img.copy()
-	print(img)
 	face, rect = detect_face(img)
-	print(face)
 	label = face_recognizer.predict(face)
 	print(label)
 	label_text = subjects[label[0]]
@@ -76,7 +74,6 @@ print("Data prepared")
 print("Total faces: ", len(faces))
 print("Total labels: ", len(labels))
 
-
 face_recognizer = cv2.face.LBPHFaceRecognizer_create()
 face_recognizer.train(faces, np.array(labels))
 
@@ -86,7 +83,7 @@ print("Predicting images...")
 #predicted_img1 = predict(test_img1)
 #predicted_img2 = predict(test_img2)
 userInput = cv2.imread(sys.argv[1])
-print("Prediction complete")
+print("Prediction:") 
 predicted_img = predict(userInput)
 #cv2.imshow(subjects[1], cv2.resize(predicted_img1, (400, 500)))
 #cv2.imshow("Output", cv2.resize(predicted_img, (400, 500)))
