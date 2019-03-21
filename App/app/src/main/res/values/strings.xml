@@ -52,4 +52,5 @@
     <string name="detect_gender">Detect gender</string>
     <string name="detect_mood">Detect mood</string>
     <string name="predicted_mood">\nPredicted mood: %s</string>
+    <string name="object_detection">Superface++(New) Detect Object</string>
 </resources>

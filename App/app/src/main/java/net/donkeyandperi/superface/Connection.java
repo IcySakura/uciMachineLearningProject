@@ -274,15 +274,17 @@ public class Connection {
 
         private String filename;
         private Handler handler;
+        private String dir;
 
-        public DownloadFile(String filename, Handler handler){
+        public DownloadFile(String filename, String dir, Handler handler){
             this.filename = filename;
             this.handler = handler;
+            this.dir = dir;
         }
 
         @Override
         protected String doInBackground(String... params) {
-            String url_str = mainUriTag + "/output/gender_detection/" + filename;
+            String url_str = mainUriTag + "/output/" + dir + filename;
             Bundle bundle = new Bundle();
             try {
                 URL url = new URL(url_str);
@@ -440,6 +442,61 @@ public class Connection {
             }
             catch(UnsupportedEncodingException e) {
                 Log.d("DetectMood: ", "Error");
+                e.printStackTrace();
+            }
+            catch(IOException e) {
+                e.printStackTrace();
+            }
+            handler.sendMessage(msg);
+            return "";
+        }
+    }
+
+    public class DetectObject extends AsyncTask<String, Void, String> {
+
+        private Handler handler;
+
+        public DetectObject(Handler handler){
+            this.handler = handler;
+            Log.d("DetectObject ", " initialized...");
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            File imageFile = new File(myApp.getNumOfFaceDetectionImageUri().toString());
+
+            HttpPost httppost = new HttpPost(mainUriTag + "object_detection.php");
+            HttpClient myClient = new DefaultHttpClient();
+
+            MultipartEntity entity = new MultipartEntity();
+            StringBody x = null;
+            Message msg = new Message();
+            try {
+                Log.d(TAG, "DetectObject: Comparing " + myApp.getNumOfFaceDetectionImageName()
+                        + " with " + myApp.getNumOfFaceDetectionImageUri().toString());
+                x = new StringBody(myApp.getNumOfFaceDetectionImageName(), Charset.forName("UTF-8"));
+                entity.addPart("title", x);
+                FileBody fileBody = new FileBody(imageFile);
+                entity.addPart("file", fileBody);
+                httppost.setEntity(entity);
+                httppost.getParams().setParameter("project", 1);
+                HttpResponse myResponse = myClient.execute(httppost);
+
+                BufferedReader br = new BufferedReader( new InputStreamReader(myResponse.getEntity().getContent()));
+                String line = "";
+                StringBuilder stringBuilder = new StringBuilder();
+                while ((line = br.readLine()) != null)
+                {
+                    stringBuilder.append(line);
+                    Log.d("DetectObject: ", line);
+                }
+                Bundle bundle = new Bundle();
+                bundle.putString("msg_from_server", stringBuilder.toString());
+                bundle.putBoolean("is_success", true);
+                msg.setData(bundle);
+            }
+            catch(UnsupportedEncodingException e) {
+                Log.d("DetectObject: ", "Error");
                 e.printStackTrace();
             }
             catch(IOException e) {

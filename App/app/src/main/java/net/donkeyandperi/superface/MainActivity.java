@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity
     private RadioButton numOfFaceInImageRadioButton;
     private RadioButton genderDetectionRadioButton;
     private RadioButton moodDetectionRadioButton;
+    private RadioButton objectDetectionRadioButton;
     private Button takePhotoButton;
     private Button takePhotoButtonForLabeling;
     private Button clearAllLabelPhotoButton;
@@ -118,6 +119,7 @@ public class MainActivity extends AppCompatActivity
         numOfFaceInImageRadioButton = findViewById(R.id.content_superface_playground_detect_num_of_face);
         genderDetectionRadioButton = findViewById(R.id.content_superface_playground_detect_gender);
         moodDetectionRadioButton = findViewById(R.id.content_superface_playground_detect_mood);
+        objectDetectionRadioButton = findViewById(R.id.content_superface_playground_detect_object);
         radioGroupFirst = findViewById(R.id.content_superface_playground_radioGroup);
         radioGroupSecond = findViewById(R.id.content_superface_labeling_radioGroup);
         takePhotoButton = findViewById(R.id.content_superface_playground_take_photo_button);
@@ -196,7 +198,7 @@ public class MainActivity extends AppCompatActivity
                                         dataBack.getString("msg_from_server")));
                             } else if (genderDetectionRadioButton.isChecked()){
                                 latestInfoFromServer = dataBack.getString("msg_from_server");
-                                new Connection(context, myApp).new DownloadFile("gender_detection.jpg",
+                                new Connection(context, myApp).new DownloadFile("gender_detection.jpg","gender_detection/",
                                         handlerForDownload).execute();
                                 isGoingToShowAlertDialog = false;
                                 progressDialog.show();
@@ -204,6 +206,12 @@ public class MainActivity extends AppCompatActivity
                                 alertDialog.setMessage(String.format(getString(R.string.msg_from_server_with_string),
                                         String.format(getString(R.string.predicted_mood),
                                                 dataBack.getString("msg_from_server"))));
+                            } else if (objectDetectionRadioButton.isChecked()){
+                                latestInfoFromServer = dataBack.getString("msg_from_server");
+                                new Connection(context, myApp).new DownloadFile("object_detection.jpg","",
+                                        handlerForDownload).execute();
+                                isGoingToShowAlertDialog = false;
+                                progressDialog.show();
                             }
                             break;
                         case 1:
@@ -252,11 +260,11 @@ public class MainActivity extends AppCompatActivity
                 progressDialog.dismiss();
                 switch (myApp.getCurrentMode()){
                     case 0:
+                        AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+                        alertDialog.setTitle(getString(R.string.msg_from_server));
+                        LayoutInflater factory = LayoutInflater.from(context);
+                        final View view = factory.inflate(R.layout.alertdialog_with_image, null);
                         if(genderDetectionRadioButton.isChecked()){
-                            AlertDialog alertDialog = new AlertDialog.Builder(context).create();
-                            alertDialog.setTitle(getString(R.string.msg_from_server));
-                            LayoutInflater factory = LayoutInflater.from(context);
-                            final View view = factory.inflate(R.layout.alertdialog_with_image, null);
                             ImageView imageView = view.findViewById(R.id.dialog_imageview);
                             imageView.setImageBitmap(getGenderDetectionResultImage());
                             TextView textView = view.findViewById(R.id.dialog_textview);
@@ -270,8 +278,22 @@ public class MainActivity extends AppCompatActivity
                                             dialog.dismiss();
                                         }
                                     });
-                            alertDialog.show();
+                        } else if (objectDetectionRadioButton.isChecked()){
+                            ImageView imageView = view.findViewById(R.id.dialog_imageview);
+                            imageView.setImageBitmap(getObjectDetectionResultImage());
+                            TextView textView = view.findViewById(R.id.dialog_textview);
+                            textView.setText(String.format(getString(R.string.msg_from_server_with_string),
+                                    latestInfoFromServer));
+                            alertDialog.setView(view);
+                            alertDialog.setCancelable(false);
+                            alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
+                                        }
+                                    });
                         }
+                        alertDialog.show();
                         break;
                     case 1:
                         break;
@@ -380,6 +402,8 @@ public class MainActivity extends AppCompatActivity
                         new Connection(context, myApp).new DetectGender(handler).execute();
                     } else if (moodDetectionRadioButton.isChecked()){
                         new Connection(context, myApp).new DetectMood(handler).execute();
+                    } else if (objectDetectionRadioButton.isChecked()){
+                        new Connection(context, myApp).new DetectObject(handler).execute();
                     }
                     break;
                 case 1:
@@ -402,6 +426,12 @@ public class MainActivity extends AppCompatActivity
     public Bitmap getGenderDetectionResultImage(){
         File imageFile = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
                 + "/" + "gender_detection.jpg");
+        return BitmapFactory.decodeFile(imageFile.getPath());
+    }
+
+    public Bitmap getObjectDetectionResultImage(){
+        File imageFile = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                + "/" + "object_detection.jpg");
         return BitmapFactory.decodeFile(imageFile.getPath());
     }
 

@@ -9,20 +9,24 @@ import os
 
 def download_file(url, file_name, dest_dir):
 
+    #print("Going to make dir: " + dest_dir)
     if not os.path.exists(dest_dir):
         os.makedirs(dest_dir)
 
+    #print("next");
     full_path_to_file = dest_dir + os.path.sep + file_name
-
+    
+    #print("checking");
     if os.path.exists(dest_dir + os.path.sep + file_name):
+        #print("checking111");
         return full_path_to_file
 
-    print("Downloading " + file_name + " from " + url)
+    #print("Downloading " + file_name + " from " + url)
 
     try:
         r = requests.get(url, allow_redirects=True, stream=True)
     except:
-        print("Could not establish connection. Download failed")
+        #print("Could not establish connection. Download failed")
         return None
 
     file_size = int(r.headers['Content-Length'])
@@ -32,7 +36,7 @@ def download_file(url, file_name, dest_dir):
     bar = pb.ProgressBar(maxval=num_bars).start()
     
     if r.status_code != requests.codes.ok:
-        print("Error occurred while downloading file")
+        #print("Error occurred while downloading file")
         return None
 
     count = 0
@@ -51,7 +55,7 @@ def download_file(url, file_name, dest_dir):
 
 initialize = True
 net = None
-dest_dir = os.path.expanduser('~') + os.path.sep + '.cvlib' + os.path.sep + 'object_detection' + os.path.sep + 'yolo' + os.path.sep + 'yolov3'
+dest_dir = "./data" + os.path.sep + '.cvlib' + os.path.sep + 'object_detection' + os.path.sep + 'yolo' + os.path.sep + 'yolov3'
 classes = None
 COLORS = np.random.uniform(0, 255, size=(80, 3))
 
@@ -105,6 +109,7 @@ def draw_bbox(img, bbox, labels, confidence, colors=None, write_conf=False):
     
 def detect_common_objects(image):
 
+    #print("11")
     Height, Width = image.shape[:2]
     scale = 0.00392
 
@@ -113,15 +118,19 @@ def detect_common_objects(image):
 
     config_file_name = 'yolov3.cfg'
     config_file_abs_path = dest_dir + os.path.sep + config_file_name
-
+    
+    #print("22")
     weights_file_name = 'yolov3.weights'
     weights_file_abs_path = dest_dir + os.path.sep + weights_file_name    
     
     url = 'https://github.com/arunponnusamy/object-detection-opencv/raw/master/yolov3.cfg'
 
+    
+    #print("33")
     if not os.path.exists(config_file_abs_path):
         download_file(url=url, file_name=config_file_name, dest_dir=dest_dir)
-
+    
+    #print("44")
     url = 'https://pjreddie.com/media/files/yolov3.weights'
 
     if not os.path.exists(weights_file_abs_path):
@@ -129,14 +138,16 @@ def detect_common_objects(image):
 
     global initialize
     global net
-
+    
+    #print("55")
     if initialize:
         classes = populate_class_labels()
         net = cv2.dnn.readNet(weights_file_abs_path, config_file_abs_path)
         initialize = False
 
     blob = cv2.dnn.blobFromImage(image, scale, (416,416), (0,0,0), True, crop=False)
-
+    
+    #print("66")
     net.setInput(blob)
 
     outs = net.forward(get_output_layers(net))
@@ -184,11 +195,11 @@ def detect_common_objects(image):
     return bbox, label, conf
 
 
-
 image = cv2.imread(sys.argv[1])
 
 # apply object detection
-bbox, label, conf = cv.detect_common_objects(image)
+bbox, label, conf = detect_common_objects(image)
+#print("2")
 
 print(bbox, label, conf)
 
@@ -197,11 +208,11 @@ out = draw_bbox(image, bbox, label, conf)
 
 # display output
 # press any key to close window           
-cv2.imshow("object_detection", out)
-cv2.waitKey()
+#cv2.imshow("object_detection", out)
+#cv2.waitKey()
 
 # save output
-#cv2.imwrite("object_detection.jpg", out)
+cv2.imwrite("./output/object_detection.jpg", out)
 
 # release resources
-cv2.destroyAllWindows()
+#cv2.destroyAllWindows()
