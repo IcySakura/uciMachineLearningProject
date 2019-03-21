@@ -17,11 +17,17 @@ import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
@@ -254,6 +260,131 @@ public class Connection {
             }
             catch(UnsupportedEncodingException e) {
                 Log.d("ClearAllLabelPhotos: ", "Error");
+                e.printStackTrace();
+            }
+            catch(IOException e) {
+                e.printStackTrace();
+            }
+            handler.sendMessage(msg);
+            return "";
+        }
+    }
+
+    public class DownloadFile extends AsyncTask<String, Void, String> {
+
+        private String filename;
+        private Handler handler;
+
+        public DownloadFile(String filename, Handler handler){
+            this.filename = filename;
+            this.handler = handler;
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String url_str = mainUriTag + "/output/gender_detection/" + filename;
+            Bundle bundle = new Bundle();
+            try {
+                URL url = new URL(url_str);
+                Log.d("DownloadFile: ", "Connected to " + url_str);
+                int count;
+                try {
+                    Log.d("DownloadFile: ", "Downdload background");
+
+                    URLConnection conection = url.openConnection();
+                    conection.connect();
+                    // getting file length
+                    int lenghtOfFile = conection.getContentLength();
+
+                    // input stream to read file - with 8k buffer
+                    InputStream input = new BufferedInputStream(url.openStream(), 8192);
+                    // Output stream to write file
+                    File dir = new File(sContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                            + "/" );
+                    dir.mkdirs();
+                    File outputFile = new File(dir, filename);
+
+                    OutputStream output = new FileOutputStream(outputFile);
+                    byte data[] = new byte[1024];
+
+                    long total = 0;
+                    while ((count = input.read(data)) != -1) {
+                        total += count;
+
+                        // writing data to file
+                        output.write(data, 0, count);
+                    }
+                    // flushing output
+                    output.flush();
+
+                    // closing streams
+                    output.close();
+                    input.close();
+
+                    bundle.putBoolean("is_success", true);
+
+                    Log.d(TAG, "DownloadFile: " + filename + "has been downloaded to " + dir.getAbsolutePath());
+
+                } catch (Exception e) {
+                    bundle.putBoolean("is_success", false);
+                    Log.e("DownloadFile Error: ", e.getMessage());
+                }
+            } catch (Exception e) {
+                bundle.putBoolean("is_success", false);
+                Log.d("DownloadFile: Error", "try");
+            }
+            Message message = new Message();
+            message.setData(bundle);
+            handler.sendMessage(message);
+            return "";
+        }
+    }
+
+    public class DetectGender extends AsyncTask<String, Void, String> {
+
+        private Handler handler;
+
+        public DetectGender(Handler handler){
+            this.handler = handler;
+            Log.d("DetectGender ", " initialized...");
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            File imageFile = new File(myApp.getNumOfFaceDetectionImageUri().toString());
+
+            HttpPost httppost = new HttpPost(mainUriTag + "detect_gender.php");
+            HttpClient myClient = new DefaultHttpClient();
+
+            MultipartEntity entity = new MultipartEntity();
+            StringBody x = null;
+            Message msg = new Message();
+            try {
+                Log.d(TAG, "DetectGender: Comparing " + myApp.getNumOfFaceDetectionImageName()
+                        + " with " + myApp.getNumOfFaceDetectionImageUri().toString());
+                x = new StringBody(myApp.getNumOfFaceDetectionImageName(), Charset.forName("UTF-8"));
+                entity.addPart("title", x);
+                FileBody fileBody = new FileBody(imageFile);
+                entity.addPart("file", fileBody);
+                httppost.setEntity(entity);
+                httppost.getParams().setParameter("project", 1);
+                HttpResponse myResponse = myClient.execute(httppost);
+
+                BufferedReader br = new BufferedReader( new InputStreamReader(myResponse.getEntity().getContent()));
+                String line = "";
+                StringBuilder stringBuilder = new StringBuilder();
+                while ((line = br.readLine()) != null)
+                {
+                    stringBuilder.append(line);
+                    Log.d("DetectGender: ", line);
+                }
+                Bundle bundle = new Bundle();
+                bundle.putString("msg_from_server", stringBuilder.toString());
+                bundle.putBoolean("is_success", true);
+                msg.setData(bundle);
+            }
+            catch(UnsupportedEncodingException e) {
+                Log.d("DetectGender: ", "Error");
                 e.printStackTrace();
             }
             catch(IOException e) {

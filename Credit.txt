@@ -1,0 +1,3 @@
+# author: Arun Ponnusamy
+# website: https://www.arunponnusamy.com
+// Above is for detect_gender.py

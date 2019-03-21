@@ -4,16 +4,20 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 
 import com.google.android.material.navigation.NavigationView;
@@ -29,6 +33,7 @@ import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -47,6 +52,7 @@ public class MainActivity extends AppCompatActivity
 
     private RadioGroup radioGroupFirst;
     private RadioButton numOfFaceInImageRadioButton;
+    private RadioButton genderDetectionRadioButton;
     private Button takePhotoButton;
     private Button takePhotoButtonForLabeling;
     private Button clearAllLabelPhotoButton;
@@ -59,7 +65,10 @@ public class MainActivity extends AppCompatActivity
     private int labelS1Counter = 1;
     private int labelS2Counter = 1;
 
+    private String latestInfoFromServer = "";
+
     private Handler handler;
+    private Handler handlerForDownload;
 
     static final int REQUEST_TAKE_PHOTO = 1;
 
@@ -112,7 +121,9 @@ public class MainActivity extends AppCompatActivity
         progressDialog.setMessage(getString(R.string.talking_with_server));
         progressDialog.setCancelable(false);
         setUpHandler();
+        setUpHandlerForDownload();
         numOfFaceInImageRadioButton = findViewById(R.id.content_superface_playground_detect_num_of_face);
+        genderDetectionRadioButton = findViewById(R.id.content_superface_playground_detect_gender);
         radioGroupFirst = findViewById(R.id.content_superface_playground_radioGroup);
         takePhotoButton = findViewById(R.id.content_superface_playground_take_photo_button);
         takePhotoButtonForLabeling = findViewById(R.id.content_superface_labeling_take_photo_button);
@@ -175,6 +186,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public boolean handleMessage(Message msg) {
                 progressDialog.dismiss();
+                boolean isGoingToShowAlertDialog = true;
                 Bundle dataBack = msg.getData();
                 if(dataBack == null){
                     return false;
@@ -184,8 +196,16 @@ public class MainActivity extends AppCompatActivity
                     alertDialog.setTitle(getString(R.string.msg_from_server));
                     switch (myApp.getCurrentMode()){
                         case 0:
-                            alertDialog.setMessage(String.format(getString(R.string.amount_of_face_detected),
-                                    dataBack.getString("msg_from_server")));
+                            if(numOfFaceInImageRadioButton.isChecked()){
+                                alertDialog.setMessage(String.format(getString(R.string.amount_of_face_detected),
+                                        dataBack.getString("msg_from_server")));
+                            } else if (genderDetectionRadioButton.isChecked()){
+                                latestInfoFromServer = dataBack.getString("msg_from_server");
+                                new Connection(context, myApp).new DownloadFile("gender_detection.jpg",
+                                        handlerForDownload).execute();
+                                isGoingToShowAlertDialog = false;
+                                progressDialog.show();
+                            }
                             break;
                         case 1:
                             if(uploadLabelS1Photo.isChecked() || uploadLabelS2Photo.isChecked()){
@@ -213,11 +233,46 @@ public class MainActivity extends AppCompatActivity
                                     dialog.dismiss();
                                 }
                             });
-                    alertDialog.show();
+                    if(isGoingToShowAlertDialog){
+                        alertDialog.show();
+                    }
                 }
                 if(myApp.getCurrentMode() == 2){
                     // Go Back to mode 1
                     myApp.setCurrentMode(1);
+                }
+                return false;
+            }
+        });
+    }
+
+    private void setUpHandlerForDownload(){
+        handlerForDownload = new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                progressDialog.dismiss();
+                switch (myApp.getCurrentMode()){
+                    case 0:
+                        if(genderDetectionRadioButton.isChecked()){
+                            AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+                            alertDialog.setTitle(getString(R.string.be_notified));
+                            LayoutInflater factory = LayoutInflater.from(context);
+                            final View view = factory.inflate(R.layout.alertdialog_with_image, null);
+                            ImageView imageView = view.findViewById(R.id.dialog_imageview);
+                            imageView.setImageBitmap(getGenderDetectionResultImage());
+                            alertDialog.setView(view);
+                            alertDialog.setCancelable(false);
+                            alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
+                                        }
+                                    });
+                            alertDialog.show();
+                        }
+                        break;
+                    case 1:
+                        break;
                 }
                 return false;
             }
@@ -332,6 +387,8 @@ public class MainActivity extends AppCompatActivity
                     if(numOfFaceInImageRadioButton.isChecked()){
                         Log.d(TAG, "onActivityResult: Going to execute detectNumOfFace");
                         new Connection(context, myApp).new DetectNumOfFace(handler).execute();
+                    } else if (genderDetectionRadioButton.isChecked()){
+                        new Connection(context, myApp).new DetectGender(handler).execute();
                     }
                     break;
                 case 1:
@@ -349,6 +406,12 @@ public class MainActivity extends AppCompatActivity
             }
 
         }
+    }
+
+    public Bitmap getGenderDetectionResultImage(){
+        File imageFile = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                + "/" + "gender_detection.jpg");
+        return BitmapFactory.decodeFile(imageFile.getPath());
     }
 
 }

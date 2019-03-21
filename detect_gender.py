@@ -1,6 +1,3 @@
-# author: Arun Ponnusamy
-# website: https://www.arunponnusamy.com
-
 # import necessary packages
 from keras.preprocessing.image import img_to_array
 from keras.models import load_model
@@ -64,10 +61,10 @@ for idx, f in enumerate(face):
     cv2.putText(image, label, (startX, Y),  cv2.FONT_HERSHEY_SIMPLEX,
                 0.7, (0, 255, 0), 2)
 
-cv2.imshow("gender detection", image)
+#cv2.imshow("gender detection", image)
          
-cv2.waitKey()
+#cv2.waitKey()
 
-##cv2.imwrite("gender_detection.jpg", image)
+cv2.imwrite("./output/gender_detection/gender_detection.jpg", image)
 
-cv2.destroyAllWindows()
+#cv2.destroyAllWindows()
