@@ -49,5 +49,7 @@
     </string>
     <string name="be_notified">Please Be Notified!</string>
     <string name="cancel">Cancel</string>
-    <string name="detect_gender">Detect Gender</string>
+    <string name="detect_gender">Detect gender</string>
+    <string name="detect_mood">Detect mood</string>
+    <string name="predicted_mood">\nPredicted mood: %s</string>
 </resources>

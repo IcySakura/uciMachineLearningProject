@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity
     private RadioGroup radioGroupFirst;
     private RadioButton numOfFaceInImageRadioButton;
     private RadioButton genderDetectionRadioButton;
+    private RadioButton moodDetectionRadioButton;
     private Button takePhotoButton;
     private Button takePhotoButtonForLabeling;
     private Button clearAllLabelPhotoButton;
@@ -82,15 +83,6 @@ public class MainActivity extends AppCompatActivity
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -125,7 +117,9 @@ public class MainActivity extends AppCompatActivity
         setUpHandlerForDownload();
         numOfFaceInImageRadioButton = findViewById(R.id.content_superface_playground_detect_num_of_face);
         genderDetectionRadioButton = findViewById(R.id.content_superface_playground_detect_gender);
+        moodDetectionRadioButton = findViewById(R.id.content_superface_playground_detect_mood);
         radioGroupFirst = findViewById(R.id.content_superface_playground_radioGroup);
+        radioGroupSecond = findViewById(R.id.content_superface_labeling_radioGroup);
         takePhotoButton = findViewById(R.id.content_superface_playground_take_photo_button);
         takePhotoButtonForLabeling = findViewById(R.id.content_superface_labeling_take_photo_button);
         clearAllLabelPhotoButton = findViewById(R.id.content_superface_labeling_clear_all_photos_button);
@@ -206,6 +200,10 @@ public class MainActivity extends AppCompatActivity
                                         handlerForDownload).execute();
                                 isGoingToShowAlertDialog = false;
                                 progressDialog.show();
+                            } else if (moodDetectionRadioButton.isChecked()){
+                                alertDialog.setMessage(String.format(getString(R.string.msg_from_server_with_string),
+                                        String.format(getString(R.string.predicted_mood),
+                                                dataBack.getString("msg_from_server"))));
                             }
                             break;
                         case 1:
@@ -297,11 +295,6 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -344,14 +337,6 @@ public class MainActivity extends AppCompatActivity
                         }
                     });
             alertDialog.show();
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -393,6 +378,8 @@ public class MainActivity extends AppCompatActivity
                         new Connection(context, myApp).new DetectNumOfFace(handler).execute();
                     } else if (genderDetectionRadioButton.isChecked()){
                         new Connection(context, myApp).new DetectGender(handler).execute();
+                    } else if (moodDetectionRadioButton.isChecked()){
+                        new Connection(context, myApp).new DetectMood(handler).execute();
                     }
                     break;
                 case 1:

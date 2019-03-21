@@ -395,4 +395,59 @@ public class Connection {
         }
     }
 
+    public class DetectMood extends AsyncTask<String, Void, String> {
+
+        private Handler handler;
+
+        public DetectMood(Handler handler){
+            this.handler = handler;
+            Log.d("DetectMood ", " initialized...");
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            File imageFile = new File(myApp.getNumOfFaceDetectionImageUri().toString());
+
+            HttpPost httppost = new HttpPost(mainUriTag + "detect_mood.php");
+            HttpClient myClient = new DefaultHttpClient();
+
+            MultipartEntity entity = new MultipartEntity();
+            StringBody x = null;
+            Message msg = new Message();
+            try {
+                Log.d(TAG, "DetectMood: Comparing " + myApp.getNumOfFaceDetectionImageName()
+                        + " with " + myApp.getNumOfFaceDetectionImageUri().toString());
+                x = new StringBody(myApp.getNumOfFaceDetectionImageName(), Charset.forName("UTF-8"));
+                entity.addPart("title", x);
+                FileBody fileBody = new FileBody(imageFile);
+                entity.addPart("file", fileBody);
+                httppost.setEntity(entity);
+                httppost.getParams().setParameter("project", 1);
+                HttpResponse myResponse = myClient.execute(httppost);
+
+                BufferedReader br = new BufferedReader( new InputStreamReader(myResponse.getEntity().getContent()));
+                String line = "";
+                StringBuilder stringBuilder = new StringBuilder();
+                while ((line = br.readLine()) != null)
+                {
+                    stringBuilder.append(line);
+                    Log.d("DetectMood: ", line);
+                }
+                Bundle bundle = new Bundle();
+                bundle.putString("msg_from_server", stringBuilder.toString());
+                bundle.putBoolean("is_success", true);
+                msg.setData(bundle);
+            }
+            catch(UnsupportedEncodingException e) {
+                Log.d("DetectMood: ", "Error");
+                e.printStackTrace();
+            }
+            catch(IOException e) {
+                e.printStackTrace();
+            }
+            handler.sendMessage(msg);
+            return "";
+        }
+    }
+
 }

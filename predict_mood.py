@@ -1,19 +1,21 @@
 #Mood identificaiton
 import cv2
 import math
+import sys
 
 def sigmoid(x):
   return 1 / (1 + math.exp(-x))
 
 emotions = ["neutral", "anger", "disgust",  "happy",  "surprise"]
 
-faceDet = cv2.CascadeClassifier("./haarcascades/haarcascade_frontalface_default.xml")
-faceDet_two = cv2.CascadeClassifier("./haarcascades/haarcascade_frontalface_alt2.xml")
+faceDet = cv2.CascadeClassifier("./data/haarcascades/haarcascade_frontalface_default.xml")
+faceDet_two = cv2.CascadeClassifier("./data/haarcascades/haarcascade_frontalface_alt2.xml")
 
-faceDet_three = cv2.CascadeClassifier("./haarcascades/haarcascade_frontalface_alt.xml")
-faceDet_four = cv2.CascadeClassifier("./haarcascades/haarcascade_frontalface_alt_tree.xml")
+faceDet_three = cv2.CascadeClassifier("./data/haarcascades/haarcascade_frontalface_alt.xml")
+faceDet_four = cv2.CascadeClassifier("./data/haarcascades/haarcascade_frontalface_alt_tree.xml")
 def process_face(img):
         frame = cv2.imread(img)
+        #print(frame)
         
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         #4 different pre-trained classifier
@@ -47,7 +49,8 @@ def process_face(img):
 def predict_emotion(img):
     outcome = process_face(img)
     predictor = cv2.face.FisherFaceRecognizer_create()
-    predictor.read('mood_model.xml')
+    predictor.read('./data/mood_model.xml')
     pred,conf = predictor.predict(outcome)
-    print(emotions[pred],'confidence is: ', conf/1000)
+    print(emotions[pred],'\n; Confidence is: ', conf/1000)
 
+predict_emotion(sys.argv[1])
