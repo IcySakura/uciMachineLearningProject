@@ -37,6 +37,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.IOException;
@@ -255,11 +256,14 @@ public class MainActivity extends AppCompatActivity
                     case 0:
                         if(genderDetectionRadioButton.isChecked()){
                             AlertDialog alertDialog = new AlertDialog.Builder(context).create();
-                            alertDialog.setTitle(getString(R.string.be_notified));
+                            alertDialog.setTitle(getString(R.string.msg_from_server));
                             LayoutInflater factory = LayoutInflater.from(context);
                             final View view = factory.inflate(R.layout.alertdialog_with_image, null);
                             ImageView imageView = view.findViewById(R.id.dialog_imageview);
                             imageView.setImageBitmap(getGenderDetectionResultImage());
+                            TextView textView = view.findViewById(R.id.dialog_textview);
+                            textView.setText(String.format(getString(R.string.msg_from_server_with_string),
+                                    latestInfoFromServer));
                             alertDialog.setView(view);
                             alertDialog.setCancelable(false);
                             alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
