@@ -1,3 +1,12 @@
+##Copyright (c) 2018 Arun Ponnusamy
+##
+##The detect_gender.py module (as a part of the Superface API) is modified based on code 
+##template provided on the Github Repository:
+##https://github.com/arunponnusamy/cvlib/tree/master/examples (Copyright (c) 2018 Arun Ponnusamy), 
+##The license of cvlib is released under MIT license.
+##The code template utilizes Opencv, Tensorflow and Keras pre-trained model . Current training data is enough for general use.
+
+
 # import necessary packages
 from keras.preprocessing.image import img_to_array
 from keras.models import load_model
