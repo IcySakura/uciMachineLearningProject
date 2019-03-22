@@ -15,6 +15,7 @@ import java.util.Date;
 public class MyApp extends Application {
 
     private static final String TAG = "MyApp";
+    private int mode = 0;   // 0 means we are in face playground; 1 means we are in face labeling
 
     public File createImageFile() throws IOException {
         // Create an image file name
@@ -33,7 +34,7 @@ public class MyApp extends Application {
     }
 
     public String getNumOfFaceDetectionImageName(){
-        return "detect_num_of_face" + ".jpg";
+        return "demo" + ".jpg";
     }
 
     public Uri getNumOfFaceDetectionImageUri(){
@@ -46,6 +47,14 @@ public class MyApp extends Application {
         Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getPath());
         Log.d(TAG, "getCurrentUserPhoto: isItNull: " + bitmap);
         return bitmap;
+    }
+
+    public void setCurrentMode(int mode){
+        this.mode = mode;
+    }
+
+    public int getCurrentMode(){
+        return mode;
     }
 
 }
