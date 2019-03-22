@@ -1,3 +1,13 @@
+'''
+This is a machine learning Python 3 file for detecting number of faces in the image.
+The original credit is given to:
+    https://medium.com/analytics-vidhya/how-to-build-a-face-detection-model-in-python-8dc9cecadfe9
+We have modified the file to make it works for our APIs.
+It has utilized a pre-trained model call “haarcascade_frontalface_default.xml,” 
+which is stored under the “data” folder in the root. The model is provided in OpenCV machine learning library.
+# Please refer to our API documentation to get more detail.
+'''
+
 import cv2
 import sys
 
