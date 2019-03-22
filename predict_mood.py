@@ -19,11 +19,13 @@ def process_face(img):
         
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         #4 different pre-trained classifier
-        face = faceDet.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5), flags=cv2.CASCADE_SCALE_IMAGE)
+        face = faceDet.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5)
         face_two = faceDet_two.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5), flags=cv2.CASCADE_SCALE_IMAGE)
         face_three = faceDet_three.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5), flags=cv2.CASCADE_SCALE_IMAGE)
         face_four = faceDet_four.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5), flags=cv2.CASCADE_SCALE_IMAGE)
         
+        #print(len(face), len(face_two), len(face_three), len(face_four))
+
         if(len(face) == 1):
             facefeatures = face
         elif len(face_two) == 1:
@@ -33,6 +35,7 @@ def process_face(img):
         elif len(face_four) == 1:
             facefeatures = face_four
         else:
+            print("No face detected in the picture.")
             facefeatures = ''
         
         for(x, y, w, h) in facefeatures:

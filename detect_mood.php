@@ -70,13 +70,13 @@ if(isset($_FILES['file'])){
         //echo "The file " . $_FILES['file']['name'] . " has been uploaded";
         
         $filename = $target_path;
-        $resizedFilename = "./input/resized_demo.png";
+        $resizedFilename = "./input/resized_demo.jpg";
 
         //echo "Going to resize from " . $filename . " to " . $resizedFilename;
 
         $imgData = resize_image($filename, 1920, 1080);
 
-        imagepng($imgData, $resizedFilename);
+        imagejpeg($imgData, $resizedFilename);
 
         $msg_back = shell_exec("python3 predict_mood.py " . $resizedFilename);
         echo $msg_back;
